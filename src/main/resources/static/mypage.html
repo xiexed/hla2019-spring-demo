@@ -3,8 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <title>Другой</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 </head>
 <body>
-<p style="text-align: center">Heello adfadfg</p>
+<div id="app-4">
+    <table>
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Price</th>
+            <th>inStock</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr v-for="prod in products">
+            <td v-text="prod.name">Oranges</td>
+            <td v-text="prod.price">0.99</td>
+            <td v-text="prod.inStock">true</td>
+        </tr>
+        </tbody>
+    </table>
+    <div>
+        <p><label>name <input type="text" v-model="product.name"></label></p>
+        <p><label>price <input type="number" v-model="product.price"></label></p>
+        <p><label>inStock <input type="checkbox" v-model="product.inStock"></label></p>
+        <button v-on:click="addProduct">Add</button>
+    </div>
+</div>
+<script>
+    var app4 = new Vue({
+        el: '#app-4',
+        data: {
+            products: [
+                {name: 'Car', price: 12, inStock: false},
+                {name: 'House', price: 112, inStock: false},
+                {name: 'Ice cream', price: 2, inStock: true}
+            ],
+            product: {name: '', price: 0, inStock: false}
+        },
+        methods: {
+            addProduct: function () {
+                // this.products.push(JSON.parse(JSON.stringify(this.product)));
+                this.products.push(Object.assign({}, this.product));
+            }
+        },
+        mounted: function () {
+            fetch(window.location.origin + "/listProducts").then(resp =>
+                resp.json().then(json => {
+                    this.products = json;
+                }));
+        }
+    });
+</script>
 </body>
 </html>

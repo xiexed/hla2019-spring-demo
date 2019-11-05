@@ -1,6 +1,5 @@
 package com.example.demo;
 
-import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
@@ -9,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@Controller
+@RestController
 public class MyController {
 
     @GetMapping("/hello")
@@ -26,12 +25,17 @@ public class MyController {
     }
 
     @GetMapping("/listProducts")
-    public String listProducts(Model model) {
-        model.addAttribute("allProducts", products);
-        return "listProducts";
+    public List<Product> listProducts() {
+        return products;
     }
 
     List<Product> products = Collections.synchronizedList(new ArrayList<>());
+
+    {
+        products.add(new Product("Product1", 1, true));
+        products.add(new Product("Product2", 10, true));
+        products.add(new Product("Product3", 100, false));
+    }
 
     @PostMapping("/postForm")
     public String processForm(@ModelAttribute Product product) {
@@ -50,11 +54,14 @@ class Product {
     private int price;
     private boolean inStock;
 
-//    public Product(String name, int price, boolean inStock) {
-//        this.name = name;
-//        this.price = price;
-//        this.inStock = inStock;
-//    }
+    public Product(String name, int price, boolean inStock) {
+        this.name = name;
+        this.price = price;
+        this.inStock = inStock;
+    }
+
+    public Product() {
+    }
 
     @Override
     public String toString() {
