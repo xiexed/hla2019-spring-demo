@@ -1,9 +1,12 @@
 package com.example.demo;
 
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
-import javax.servlet.http.HttpSession;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -11,17 +14,16 @@ import java.util.List;
 @RestController
 public class MyController {
 
-    @GetMapping("/hello")
-    public Object hello(@RequestParam(required = false) String name, HttpSession session, Model model) {
-//        System.out.println("servletRequest: " + servletRequest.getRemoteAddr());
+    List<SseEmitter> sseEmitters = Collections.synchronizedList(new ArrayList<>());
 
-        if (name != null) {
-            session.setAttribute("name", name);
-        } else {
-            name = (String) session.getAttribute("name");
-        }
-        model.addAttribute("name", name);
-        return "hello";
+    @GetMapping("/events")
+    public Object hello() {
+        SseEmitter sseEmitter = new SseEmitter();
+        sseEmitters.add(sseEmitter);
+        sseEmitter.onCompletion(() -> {
+            sseEmitters.remove(sseEmitter);
+        });
+        return sseEmitter;
     }
 
     @GetMapping("/listProducts")
@@ -38,10 +40,13 @@ public class MyController {
     }
 
     @PostMapping("/postForm")
-    public List<Product> processForm(@RequestBody Product product) {
+    public List<Product> processForm(@RequestBody Product product) throws IOException {
 //        System.out.println("name =" + name + " price = " + price + " model = " + model.asMap());
         System.out.println("product =" + product);
         products.add(product);
+        for (SseEmitter sseEmitter : sseEmitters) {
+            sseEmitter.send("update");
+        }
         return products;
     }
 
