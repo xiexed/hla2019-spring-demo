@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.spring5.SpringTemplateEngine;
 import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
@@ -13,6 +14,7 @@ import org.thymeleaf.templateresolver.ClassLoaderTemplateResolver;
 import javax.servlet.http.HttpServletRequest;
 
 @SpringBootApplication
+@EnableWebSocket
 public class DemoApplication {
 
     public static void main(String[] args) {

@@ -32,7 +32,8 @@
 </div>
 <script>
 
-    var eventSource = new EventSource(window.location.origin + "/events");
+    // var eventSource = new EventSource(window.location.origin + "/events");
+    var ws = new WebSocket(`ws://${window.location.host}/ws`);
 
     var app4 = new Vue({
         el: '#app-4',
@@ -46,25 +47,27 @@
         },
         methods: {
             addProduct: async function () {
-                let resp = await fetch(window.location.origin + "/postForm", {
-                    method: 'POST', // *GET, POST, PUT, DELETE, etc.
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(this.product)
-                });
 
-                this.products = await resp.json();
+                ws.send(JSON.stringify(this.product))
+
+                // let resp = await fetch(window.location.origin + "/postForm", {
+                //     method: 'POST', // *GET, POST, PUT, DELETE, etc.
+                //     headers: {
+                //         'Content-Type': 'application/json'
+                //     },
+                //     body: JSON.stringify(this.product)
+                // });
+                //
+                // this.products = await resp.json();
             }
         },
         mounted: async function () {
             let resp = await fetch(window.location.origin + "/listProducts");
             this.products = await resp.json();
 
-            eventSource.onmessage = async (r) => {
+            ws.onmessage = async (r) => {
                 console.log("onmessage = " + r);
-                let resp = await fetch(window.location.origin + "/listProducts");
-                this.products = await resp.json();
+                this.products = JSON.parse(r.data)
             }
         }
     });
