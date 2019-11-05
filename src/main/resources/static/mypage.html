@@ -42,16 +42,21 @@
             product: {name: '', price: 0, inStock: false}
         },
         methods: {
-            addProduct: function () {
-                // this.products.push(JSON.parse(JSON.stringify(this.product)));
-                this.products.push(Object.assign({}, this.product));
+            addProduct: async function () {
+                let resp = await fetch(window.location.origin + "/postForm", {
+                    method: 'POST', // *GET, POST, PUT, DELETE, etc.
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(this.product)
+                });
+
+                this.products = await resp.json();
             }
         },
-        mounted: function () {
-            fetch(window.location.origin + "/listProducts").then(resp =>
-                resp.json().then(json => {
-                    this.products = json;
-                }));
+        mounted: async function () {
+            let resp = await fetch(window.location.origin + "/listProducts");
+            this.products = await resp.json();
         }
     });
 </script>

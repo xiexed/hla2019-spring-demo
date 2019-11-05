@@ -38,12 +38,11 @@ public class MyController {
     }
 
     @PostMapping("/postForm")
-    public String processForm(@ModelAttribute Product product) {
+    public List<Product> processForm(@RequestBody Product product) {
 //        System.out.println("name =" + name + " price = " + price + " model = " + model.asMap());
         System.out.println("product =" + product);
         products.add(product);
-        new Product();
-        return "redirect:/listProducts";
+        return products;
     }
 
 }
