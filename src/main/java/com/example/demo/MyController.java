@@ -1,7 +1,9 @@
 package com.example.demo;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.hazelcast.core.HazelcastInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,6 +18,7 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -48,15 +51,13 @@ public class MyController {
                     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
                         String payload = message.getPayload();
                         Product product = objectMapper.readValue(payload, Product.class);
-                        products.add(product);
-                        for (WebSocketSession webSocketSession : webSocketSessions) {
-                            webSocketSession.sendMessage(new TextMessage(objectMapper.writeValueAsString(products)));
-                        }
+                        addProduct(product);
                     }
                 }, "/ws");
             }
         };
     }
+
 
     List<SseEmitter> sseEmitters = Collections.synchronizedList(new ArrayList<>());
 
@@ -75,19 +76,35 @@ public class MyController {
         return products;
     }
 
-    List<Product> products = Collections.synchronizedList(new ArrayList<>());
 
-    {
-        products.add(new Product("Product1", 1, true));
-        products.add(new Product("Product2", 10, true));
-        products.add(new Product("Product3", 100, false));
+    final HazelcastInstance hazelcastInstance;
+
+    List<Product> products;
+
+    public MyController(@Qualifier("hazelcastInstance") HazelcastInstance hazelcastInstance) {
+        this.hazelcastInstance = hazelcastInstance;
+        this.products = hazelcastInstance.getList("products111");
+        hazelcastInstance.<Product>getTopic("productAdd").addMessageListener(message -> {
+            for (WebSocketSession webSocketSession : webSocketSessions) {
+                try {
+                    webSocketSession.sendMessage(new TextMessage(objectMapper.writeValueAsString(products)));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+    }
+
+    private void addProduct(Product product) {
+        products.add(product);
+        hazelcastInstance.<Product>getTopic("productAdd").publish(product);
     }
 
     @PostMapping("/postForm")
     public List<Product> processForm(@RequestBody Product product) throws IOException {
 //        System.out.println("name =" + name + " price = " + price + " model = " + model.asMap());
         System.out.println("product =" + product);
-        products.add(product);
+        addProduct(product);
         for (SseEmitter sseEmitter : sseEmitters) {
             sseEmitter.send("update");
         }
@@ -96,7 +113,7 @@ public class MyController {
 
 }
 
-class Product {
+class Product implements Serializable {
 
     private String name;
     private int price;
